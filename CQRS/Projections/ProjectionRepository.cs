@@ -32,8 +32,16 @@ namespace CQRS.Projections
                 currentProjection = new T();
                 currentProjection.Key = key;
             }
-            var e = await _storage.GetEventsSince(currentProjection.LastEventId);
-            currentProjection.LoadsFromHistory(e);
+            try
+            {
+                var e = await _storage.GetEventsSince(currentProjection.LastEventId);
+                currentProjection.LoadsFromHistory(e);
+            }
+            catch(Exception e)
+            {
+                // TODO: Log error
+                // Here we catch any errors from the event store, so that we can protect against failures on this side, and still return our latest snapshot of the projection
+            }
             return currentProjection;
         }
 

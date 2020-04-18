@@ -30,6 +30,8 @@ namespace CQRS.Tests
                 fixture.EmptyEventStore();
                 fixture.EmptyProjectionStore();
                 fixture.ComposeHandlers();
+                fixture.ComposeProjectionStore();
+                fixture.ComposeReadModel();
             });
             $"When I send a command to create the inventory item".x(async () =>
             {
@@ -80,6 +82,8 @@ namespace CQRS.Tests
                 fixture.EmptyEventStore();
                 fixture.EmptyProjectionStore();
                 fixture.ComposeHandlers();
+                fixture.ComposeProjectionStore();
+                fixture.ComposeReadModel();
                 fixture.ComposeProjectionHandlers();
             });
             $"When I send a command to create the inventory item".x(async () =>
@@ -118,6 +122,19 @@ namespace CQRS.Tests
                 projectionDetailsStore.ShouldNotBeNull();
                 var projectionStore = await fixture.InventoryItemListProjectionStore.Get(""); // Gets all items
                 projectionStore.ShouldNotBeNull();
+            });
+            $"Then if the events store goes down".x(async () =>
+            {
+                fixture.Mediator.ClearHandlers();
+                fixture.EventStorage = null;
+                fixture.ComposeHandlers();
+                fixture.ComposeReadModel();
+            });
+            $"Our read models will still return from the projection store".x(async () =>
+            {
+                var detailsReadModel = await fixture.InventoryReadModel.GetInventoryItemDetails(inventoryItemId);
+                detailsReadModel.Name.ShouldBe(inventoryItemName);
+                detailsReadModel.CurrentCount.ShouldBe(numberOfCheckIns);
             });
 
         }

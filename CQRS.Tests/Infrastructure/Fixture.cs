@@ -44,12 +44,28 @@ namespace CQRS.Tests.Infrastructure
             Mediator.RegisterHandler<DeactivateInventoryItem>(commands.Handle);
             Mediator.RegisterHandler<RemoveItemsFromInventory>(commands.Handle);
             Mediator.RegisterHandler<RenameInventoryItem>(commands.Handle);
+        }
 
+        public void ComposeProjectionHandlers()
+        {
+            // Compose projection handlers, which save snapshots of the projections to our store, improving performance when we have many events
+            var invProjectionHandler = new ProjectionHandler<InventoryItemListProjection>(new ProjectionRepository<InventoryItemListProjection>(new ReadEventStore(EventStorage), InventoryItemListProjectionStore));
+            Mediator.RegisterHandler<InventoryItemCreated>(invProjectionHandler.Handle);
+            var invDetailProjectionHandler = new ProjectionHandler<InventoryItemDetailsProjection>(new ProjectionRepository<InventoryItemDetailsProjection>(new ReadEventStore(EventStorage), InventoryItemDetailsProjectionStore));
+            Mediator.RegisterHandler<InventoryItemCreated>(invDetailProjectionHandler.Handle);
+            Mediator.RegisterHandler<ItemsCheckedInToInventory>(invDetailProjectionHandler.Handle);
+        }
+
+        public void ComposeProjectionStore()
+        {
             // Create our projection stores
             BullShitDatabase db = new BullShitDatabase();
             InventoryItemListProjectionStore = new FakeProjectionStore<InventoryItemListProjection>(db);
             InventoryItemDetailsProjectionStore = new FakeProjectionStore<InventoryItemDetailsProjection>(db);
+        }
 
+        public void ComposeReadModel()
+        {
             // Create read model, passing projection repositories which use an event store and a projection store
             InventoryReadModel =
                 new InventoryReadModel(
@@ -62,16 +78,6 @@ namespace CQRS.Tests.Infrastructure
                         InventoryItemDetailsProjectionStore
                     )
                 );
-        }
-
-        public void ComposeProjectionHandlers()
-        {
-            // Compose projection handlers, which save snapshots of the projections to our store, improving performance when we have many events
-            var invProjectionHandler = new ProjectionHandler<InventoryItemListProjection>(new ProjectionRepository<InventoryItemListProjection>(new ReadEventStore(EventStorage), InventoryItemListProjectionStore));
-            Mediator.RegisterHandler<InventoryItemCreated>(invProjectionHandler.Handle);
-            var invDetailProjectionHandler = new ProjectionHandler<InventoryItemDetailsProjection>(new ProjectionRepository<InventoryItemDetailsProjection>(new ReadEventStore(EventStorage), InventoryItemDetailsProjectionStore));
-            Mediator.RegisterHandler<InventoryItemCreated>(invDetailProjectionHandler.Handle);
-            Mediator.RegisterHandler<ItemsCheckedInToInventory>(invDetailProjectionHandler.Handle);
         }
         public void Dispose()
         {

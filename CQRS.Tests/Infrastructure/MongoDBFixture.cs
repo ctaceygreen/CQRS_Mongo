@@ -80,10 +80,17 @@ namespace CQRS.Tests.Infrastructure
             Mediator.RegisterHandler<RemoveItemsFromInventory>(commands.Handle);
             Mediator.RegisterHandler<RenameInventoryItem>(commands.Handle);
 
+        }
+
+        public void ComposeProjectionStore()
+        {
             // Create our projection stores
             InventoryItemListProjectionStore = new MongoProjectionStore<InventoryItemListProjection>(_mongoClient, _listProjectionMongoSettings);
             InventoryItemDetailsProjectionStore = new MongoProjectionStore<InventoryItemDetailsProjection>(_mongoClient, _detailProjectionMongoSettings);
+        }
 
+        public void ComposeReadModel()
+        {
             // Create read model, passing projection repositories which use an event store and a projection store
             InventoryReadModel =
                 new InventoryReadModel(
