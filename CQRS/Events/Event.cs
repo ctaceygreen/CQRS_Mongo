@@ -11,10 +11,12 @@ namespace CQRS.Events
         public string Type { get; set; }
         public string Id { get; set; }
         public Guid AggregateId { get; set; }
+        public DateTime DateCreated { get; set; }
 
         public Event()
         {
             Type = GetType().FullName;
+            DateCreated = DateTime.UtcNow;
         }
     }
 }
